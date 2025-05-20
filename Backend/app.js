@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import cookieParser from "cookie-parser";
-import DbConnect from "./Config/mongoDb.js";
+import DbConnect from "./Config/mongoDB.js";
 import cors from "cors";
 import authRouter from "./Routes/auth.Routes.js";
 import cloudConfig from "./Config/cloudinary.js";
@@ -31,7 +31,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRouter);
 
-await Livechat(app);
+await Livechat(io);
 
 server.listen(port, () => {
   console.log(`Server is running on ${port}`);

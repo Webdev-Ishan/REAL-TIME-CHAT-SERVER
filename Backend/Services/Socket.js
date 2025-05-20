@@ -1,5 +1,5 @@
-import User from "./Models/user.Model.js";
-import messageModel from "./Models/messages.model.js";
+import User from "../Models/user.Model.js";
+import messageModel from "../Models/messages.model.js";
 import RoomModel from "../Models/room.model.js";
 
 // to find the messages by the room and fetch thme according to date
@@ -25,8 +25,9 @@ function sortRoomMessagesByDate(messages) {
   });
 }
 
-export const Livechat = async () => {
+export const Livechat = async (io) => {
   io.on("connection", (socket) => {
+    console.log(socket.id)
     socket.on("new-user", async () => {
       let members = await User.find({});
       io.emit("new-member", members);
