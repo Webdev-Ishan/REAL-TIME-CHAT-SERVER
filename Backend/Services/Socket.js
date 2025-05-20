@@ -55,7 +55,7 @@ export const Livechat = async (io) => {
     });
 
     socket.on("join-room", async (newroom, previousroom, userId) => {
-      if (previousroom) {
+      if (previousroom == newroom) {
         socket.leave(previousroom);
       }
 
