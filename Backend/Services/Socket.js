@@ -27,43 +27,60 @@ function sortRoomMessagesByDate(messages) {
 
 export const Livechat = async (io) => {
   io.on("connection", (socket) => {
-    console.log(socket.id)
+    console.log(socket.id);
     socket.on("new-user", async () => {
       let members = await User.find({});
       io.emit("new-member", members);
     });
 
-    socket.on("create-room", async (roomname, socket, creator) => {
-      let already = await RoomModel.findone(roomname);
+    socket.on("create-room", async (roomname, creator, userId) => {
+      let already = await RoomModel.findOne({ name: roomname });
       if (already) {
         socket.emit("Error-room", "Room of this name already exists");
+        return;
       }
 
       let newroom = await RoomModel.create({
         name: roomname,
         created_by: creator,
-        members: socket,
+        members: [userId],
       });
 
-      socket.join(newroom);
+      socket.join(newroom.name);
+
       socket.emit(
         "confirm",
         "The new room has created and you are joined in it."
       );
     });
 
-    socket.on("join-room", async (newroom, previousroom) => {
-      if (newroom === previousroom) {
+    socket.on("join-room", async (newroom, previousroom, userId) => {
+      if (previousroom) {
         socket.leave(previousroom);
       }
 
       socket.join(newroom);
+      await RoomModel.updateOne(
+        { name: newroom },
+        { $addToSet: { members: userId } }
+      );
+
       let previouschat = await getlastmessages(newroom);
       let roomMessages = sortRoomMessagesByDate(previouschat);
       socket.emit("room-messages", roomMessages);
     });
 
     socket.on("message-room", async (room, sender, time, date, content) => {
+      let senderid = await RoomModel.findOne({ name: room });
+
+      if (!senderid) {
+        socket.emit(
+          "error-message",
+          "You are not a valid person to send message"
+        );
+        return;
+      }
+
       let newMessage = await messageModel.create({
         from: sender,
         time,
@@ -76,6 +93,11 @@ export const Livechat = async (io) => {
 
       io.to(room).emit("room-messages", roomMessages);
       socket.broadcast.emit("notifications", room);
+    });
+
+    socket.on("disconnect", async (userid) => {
+      await RoomModel.updateMany({}, { $pull: { members: userid } });
+      console.log(`Socket ${socket.id} disconnected`);
     });
   });
 };
