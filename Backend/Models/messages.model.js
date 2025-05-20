@@ -25,6 +25,10 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  room: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Room",
+  },
 });
 
 const messageModel = new mongoose.model("Message", messageSchema);
